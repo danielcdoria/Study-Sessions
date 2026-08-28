@@ -6,10 +6,10 @@ import com.example.StudyAPI.models.StudySession;
 import com.example.StudyAPI.models.User;
 import com.example.StudyAPI.repositories.SessionsRepository;
 import com.example.StudyAPI.repositories.UserRepository;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -64,8 +64,35 @@ public class SessionService {
         StudySession session = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
         if (!session.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("Acess denied.")
+            throw new IllegalArgumentException("Acess denied.");
         }
         return convertToDto(session);
+    }
+
+    public String remove(Long id){
+        User user = getLoggedUser();
+        StudySession session = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Session not found."));
+        if (!session.getUser().getId().equals(user.getId())){
+            throw new IllegalArgumentException("Acess denied.");
+        }
+        repository.delete(session);
+        return "This session was removed successfully!";
+    }
+
+    public List<SessionResponseDto> findBySubject(StudySession.Subject subject){
+        User user = getLoggedUser();
+        return repository.findByUserAndSubject(user, subject)
+                .stream()
+                .map(this::convertToDto)
+                .toList();
+    }
+
+    public List<SessionResponseDto> findByDate(String date){
+        User user = getLoggedUser();
+        return repository.findByUserAndDate(user, date)
+                .stream()
+                .map(this::convertToDto)
+                .toList();
     }
 }
